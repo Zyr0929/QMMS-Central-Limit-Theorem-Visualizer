@@ -2,8 +2,12 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import colorchooser
 import numpy as np
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
+
+mpl.rcParams['toolbar'] = 'toolbar2'
+mpl.rcParams['backend'] = 'TkAgg'
 
 class CLTVisualizerApp:
     def __init__(self, root):
@@ -140,38 +144,89 @@ class CLTVisualizerApp:
         self.canvas = FigureCanvasTkAgg(self.fig, master=self.plot_frame)
         self.canvas.get_tk_widget().pack(fill=tk.BOTH, expand=True)
         
-        self.toolbar = NavigationToolbar2Tk(self.canvas, self.plot_frame)
+        bottom_bar_layout = tk.Frame(self.plot_frame, bg=self.COLOR_BG)
+        bottom_bar_layout.pack(side=tk.BOTTOM, fill=tk.X, pady=(5, 0))
+
+        self.toolbar = NavigationToolbar2Tk(self.canvas, bottom_bar_layout)
         self.toolbar.configure(background=self.COLOR_BG)
         
         self.root.update_idletasks()
 
-        for child in self.toolbar.winfo_children():
-            if isinstance(child, (tk.Button, ttk.Button, tk.Checkbutton, tk.Label, ttk.Label)):
-                child.configure(
-                    background="#2e3440", 
-                    foreground="#ffffff",
-                    activebackground=self.COLOR_ACCENT,
-                    activeforeground="#ffffff",
+        home_btn = self.toolbar.children.get('!button')
+        native_back = self.toolbar.children.get('!button2')
+        native_forward = self.toolbar.children.get('!button3')
+
+        if native_back:
+            native_back.pack_forget()
+        if native_forward:
+            native_forward.pack_forget()
+
+        for widget_name, widget in self.toolbar.children.items():
+            c_class = widget.winfo_class()
+            if c_class in ('Button', 'Checkbutton'):
+                widget.configure(
+                    background=self.COLOR_BG,
+                    foreground="black",
+                    disabledforeground="#4b5263",
+                    activebackground=self.COLOR_PANEL,
+                    activeforeground="black",
                     bd=0,
                     highlightthickness=0,
                     relief="flat"
                 )
                 
-                if child.winfo_class() in ('Button', 'Checkbutton'):
+                if c_class == 'Checkbutton':
+                    try:
+                        widget.configure(selectcolor=self.COLOR_PANEL)
+                    except Exception:
+                        pass
+                
+                if widget_name not in ('!button2', '!button3'):
+                    widget.pack_configure(padx=3, pady=2, ipadx=4, ipady=2, side=tk.LEFT)
+                    
+            elif c_class == 'Label':
+                widget.configure(fg="#ffffff", font=("Segoe UI", 9, "bold"), bg=self.COLOR_BG)
 
-                    child.pack_configure(padx=3, pady=2, ipadx=4, ipady=2)
-                
-                if hasattr(child, 'cget') and child.winfo_class() == 'Label':
-                    child.configure(fg="#ffffff", font=("Segoe UI", 9, "bold"))
-            else:
-                child.configure(background=self.COLOR_BG)
-                
+        custom_back_btn = tk.Button(self.toolbar, text="◀", font=("Segoe UI", 12, "bold"),
+                                    bg=self.COLOR_BG, fg="black", activebackground=self.COLOR_PANEL,
+                                    activeforeground="black", bd=0, highlightthickness=0, width=3,
+                                    command=self.toolbar.back)
+        
+        custom_forward_btn = tk.Button(self.toolbar, text="▶", font=("Segoe UI", 12, "bold"),
+                                       bg=self.COLOR_BG, fg="black", activebackground=self.COLOR_PANEL,
+                                       activeforeground="black", bd=0, highlightthickness=0, width=3,
+                                       command=self.toolbar.forward)
+
+        if hasattr(self.toolbar, 'message'):
+            custom_back_btn.bind("<Enter>", lambda e: self.toolbar.message.set("Back to previous view"))
+            custom_back_btn.bind("<Leave>", lambda e: self.toolbar.message.set(""))
+            custom_forward_btn.bind("<Enter>", lambda e: self.toolbar.message.set("Forward to next view"))
+            custom_forward_btn.bind("<Leave>", lambda e: self.toolbar.message.set(""))
+            
+            tooltip_map = {
+                '!button': "Reset original view",
+                '!checkbutton': "Pan axes with left mouse, zoom with right",
+                '!checkbutton2': "Zoom to rectangle",
+                '!button4': "Configure subplots",
+                '!button5': "Save the figure"
+            }
+            
+            for widget_name, widget in self.toolbar.children.items():
+                if widget_name in tooltip_map:
+                    msg = tooltip_map[widget_name]
+                    widget.bind("<Enter>", lambda e, m=msg: self.toolbar.message.set(m), add="+")
+                    widget.bind("<Leave>", lambda e: self.toolbar.message.set(""), add="+")
+
+        if home_btn:
+            custom_back_btn.pack(side=tk.LEFT, padx=3, pady=2, ipadx=4, ipady=2, after=home_btn)
+            custom_forward_btn.pack(side=tk.LEFT, padx=3, pady=2, ipadx=4, ipady=2, after=custom_back_btn)
+
         if hasattr(self.toolbar, 'message'):
             self.toolbar.message.set("") 
             for key in self.toolbar.children:
                 if 'label' in key:
                     self.toolbar.children[key].configure(fg="#ffffff", font=("Segoe UI", 9, "bold"), bg=self.COLOR_BG)
-                
+
         self.toolbar.update()
         self.toolbar.pack(side=tk.BOTTOM, fill=tk.X, pady=(5, 0))
 
@@ -225,7 +280,6 @@ class CLTVisualizerApp:
         self.canvas.draw()
 
     def create_linked_control(self, parent, label_text, variable):
-        """Builds a flat, modern integrated numerical tracking control entry card."""
         header_frame = ttk.Frame(parent, style="Panel.TFrame")
         header_frame.pack(fill=tk.X, pady=(12, 4))
         
@@ -280,3 +334,4 @@ if __name__ == "__main__":
     root = tk.Tk()
     app = CLTVisualizerApp(root)
     root.mainloop()
+    
