@@ -1,9 +1,16 @@
-import tkinter as tk
-from tkinter import ttk
-from tkinter import colorchooser
+# the gui framework used to build the main window and layout frames
+import tkinter as tk 
+# the themed tkinter widgets like the buttons and combobox
+from tkinter import ttk 
+# import for the hexcolor picker
+from tkinter import colorchooser 
+# math library used to generate the random population data and calculate the sample means
 import numpy as np
+# plotting library used to set global configurations like the toolbar style
 import matplotlib as mpl
+# used to draw the histograms, curves, and manage the display
 import matplotlib.pyplot as plt
+# this allows us to use matplotlib charts and interactive toolbar to be used directly inside the tkinter gui
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg, NavigationToolbar2Tk
 
 # used the TkAgg backend to properly integrate matplotlib elements within a Tkinter window
@@ -397,6 +404,7 @@ class CLTVisualizerApp:
             preview_widget.configure(bg=selected_color[1])
 
 # application boot block :>
+# program explodes if you remove this btw
 if __name__ == "__main__":
     root = tk.Tk()
     app = CLTVisualizerApp(root)
